@@ -1,0 +1,17 @@
+{
+  "name": "jonesingTraps",
+  "description": "Jonesing Traps weapon action map",
+  "bindings": [
+    {
+      "action": "jonesingTraps.dropTrap",
+      "device": "keyboard",
+      "control": "numpad3",
+      "axisScale": 1.0,
+      "axisFilter": 0.0,
+      "deadzone": 0.0,
+      "linearity": 1.0,
+      "isTrigger": true,
+      "comment": "Drop a trap"
+    }
+  ]
+}

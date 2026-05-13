@@ -1,0 +1,11 @@
+{
+  "jonesingTrapsFire": {
+    "order": 10,
+    "title": "Jonesing Traps: Drop Land Mine",
+    "desc": "Drops a land mine from the active player vehicle.",
+    "cat": "vehicle",
+    "isBasic": true,
+    "ctx": "tlua",
+    "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.dropTrap() end"
+  }
+}

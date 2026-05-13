@@ -1,0 +1,17 @@
+{
+  "jonesing_guns": {
+    "information": {
+      "authors": "Jonesing",
+      "name": ".Jonesing Traps Mod",
+      "value": 0
+    },
+    "slotType": "licenseplate_design_2_1",
+    "controller": [
+      ["fileName"],
+      ["jonesingTrapsTrigger", {}]
+    ],
+    "slots": [
+      ["type", "default", "description"]
+    ]
+  }
+}
