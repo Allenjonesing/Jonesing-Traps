@@ -1,11 +1,5 @@
 -- lua/ge/extensions/gameplay/vehicleTrap.lua
 -- Jonesing Destruction Mod - Vehicle Trap Spawner
--- Reworked from vehicleGun.lua.
--- Removes cannon rendering, aiming, targeting, and blast logic.
--- Goal:
---   1. Pre-spawn a small pool of landmine vehicles hidden/frozen under the map.
---   2. On button trigger, move/reuse one landmine behind the player vehicle.
---   3. If all pooled mines are used, recycle the one farthest from the player.
 
 local M = {}
 
@@ -23,31 +17,18 @@ local hiddenZ = -1000
 local hiddenSpacing = 8
 
 local placeBehindDistance = 5.0
-local placeZOffset = 0.15
+local groundRayStartHeight = 50
+local groundRayLength = 250
 
--- TODO: REPLACE THIS PLACEHOLDER WITH YOUR ACTUAL LANDMINE VEHICLE MODEL.
--- Example final value may be something like:
---   local landMineModel = "jonesing_landmine"
---
--- This placeholder uses a known normal BeamNG vehicle model so the spawn call has
--- something valid to create. Change this once your landmine exists in the vehicle list.
-local landMineModel = "pickup"
-
--- TODO: REPLACE THIS PLACEHOLDER CONFIG WITH YOUR ACTUAL LANDMINE CONFIG.
--- If your landmine vehicle has a default config, you may be able to remove this field
--- from spawn options completely.
-local landMineConfig = "vehicles/pickup/base.pc"
+local landMineModel = "mineC"
+local landMineConfig = "vehicles/mineC/Normal.pc"
 
 local hudText = "Jonesing Land Mine LOADING"
 local lastMsg = {}
 local lastLog = {}
 
 local function V(x, y, z)
-  return {
-    x = tonumber(x) or 0,
-    y = tonumber(y) or 0,
-    z = tonumber(z) or 0
-  }
+  return { x = tonumber(x) or 0, y = tonumber(y) or 0, z = tonumber(z) or 0 }
 end
 
 local function vf(o)
@@ -55,21 +36,10 @@ local function vf(o)
   return V(o.x, o.y, o.z)
 end
 
-local function add(a, b)
-  return V(a.x + b.x, a.y + b.y, a.z + b.z)
-end
-
-local function sub(a, b)
-  return V(a.x - b.x, a.y - b.y, a.z - b.z)
-end
-
-local function mul(a, s)
-  return V(a.x * s, a.y * s, a.z * s)
-end
-
-local function len(a)
-  return math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
-end
+local function add(a, b) return V(a.x + b.x, a.y + b.y, a.z + b.z) end
+local function sub(a, b) return V(a.x - b.x, a.y - b.y, a.z - b.z) end
+local function mul(a, s) return V(a.x * s, a.y * s, a.z * s) end
+local function len(a) return math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) end
 
 local function norm(a, fallback)
   local l = len(a)
@@ -139,7 +109,6 @@ local function getPlayerVehicle()
     local ok, veh = pcall(be.getPlayerVehicle, be, 0)
     if ok then return veh end
   end
-
   return nil
 end
 
@@ -148,23 +117,16 @@ local function safePos(obj)
     local ok, p = pcall(obj.getPosition, obj)
     if ok and p then return vf(p) end
   end
-
   return nil
 end
 
 local function vehicleForward(veh)
-  for _, name in ipairs({
-    "getDirectionVector",
-    "getForwardVector",
-    "getFrontVector",
-    "getForward"
-  }) do
+  for _, name in ipairs({ "getDirectionVector", "getForwardVector", "getFrontVector", "getForward" }) do
     if veh and veh[name] then
       local ok, d = pcall(veh[name], veh)
       if ok and d then return norm(vf(d), V(0, 1, 0)) end
     end
   end
-
   return V(0, 1, 0)
 end
 
@@ -184,12 +146,142 @@ local function objId(o)
   return tostring(o)
 end
 
+local function tryGroundHeightApi(pos)
+  local apiChecks = {
+    function()
+      if core_environment and core_environment.getTerrainHeight then
+        return core_environment.getTerrainHeight(pos.x, pos.y)
+      end
+    end,
+    function()
+      if be and be.getTerrainHeight then
+        return be:getTerrainHeight(pos.x, pos.y)
+      end
+    end,
+    function()
+      if be and be.getSurfaceHeightBelow then
+        return be:getSurfaceHeightBelow(point(V(pos.x, pos.y, pos.z + groundRayStartHeight)))
+      end
+    end
+  }
+
+  for _, fn in ipairs(apiChecks) do
+    local ok, z = pcall(fn)
+    z = tonumber(z)
+    if ok and z then return z end
+  end
+
+  return nil
+end
+
+local function tryStaticRaycastGround(pos)
+  local from = V(pos.x, pos.y, pos.z + groundRayStartHeight)
+  local dir = V(0, 0, -1)
+
+  local rayChecks = {
+    function()
+      if Engine and Engine.castRayStatic then
+        return Engine.castRayStatic(point(from), point(dir), groundRayLength)
+      end
+    end,
+    function()
+      if be and be.castRayStatic then
+        return be:castRayStatic(point(from), point(dir), groundRayLength)
+      end
+    end,
+    function()
+      if castRayStatic then
+        return castRayStatic(point(from), point(dir), groundRayLength)
+      end
+    end
+  }
+
+  for _, fn in ipairs(rayChecks) do
+    local ok, hit = pcall(fn)
+
+    if ok and hit then
+      if type(hit) == "table" then
+        if hit.pt then
+          local p = vf(hit.pt)
+          if p then return p.z end
+        end
+
+        if hit.pos then
+          local p = vf(hit.pos)
+          if p then return p.z end
+        end
+
+        if hit.point then
+          local p = vf(hit.point)
+          if p then return p.z end
+        end
+
+        if hit.z then
+          return tonumber(hit.z)
+        end
+      end
+
+      local n = tonumber(hit)
+      if n and n > 0 and n < groundRayLength then
+        return from.z - n
+      end
+    end
+  end
+
+  return nil
+end
+
+local function snapToGround(pos)
+  if not pos then return nil, "no_position" end
+
+  local z = tryStaticRaycastGround(pos) or tryGroundHeightApi(pos)
+
+  if not z then
+    return nil, "no_ground_hit"
+  end
+
+  -- EXACT surface placement. No hardcoded vertical offset.
+  return V(pos.x, pos.y, z), "ok"
+end
+
+local function stabilizeVehicle(veh)
+  if not veh or not veh.queueLuaCommand then return end
+
+  veh:queueLuaCommand([[
+    pcall(function()
+      if obj then
+        if obj.setVelocity then obj:setVelocity(0, 0, 0) end
+        if obj.setAngularVelocity then obj:setAngularVelocity(0, 0, 0) end
+      end
+    end)
+
+    pcall(function()
+      if electrics and electrics.values then
+        electrics.values.parkingbrake = 1
+        electrics.values.brake = 1
+        electrics.values.throttle = 0
+      end
+    end)
+
+    pcall(function()
+      if ai then ai.setMode("disabled") end
+    end)
+  ]])
+end
+
 local function freezeVehicle(veh)
   if not veh then return end
 
   pcall(function()
     if veh.queueLuaCommand then
       veh:queueLuaCommand([[
+        pcall(function()
+          if obj then
+            if obj.setVelocity then obj:setVelocity(0, 0, 0) end
+            if obj.setAngularVelocity then obj:setAngularVelocity(0, 0, 0) end
+          end
+        end)
+
         pcall(function()
           if electrics and electrics.values then
             electrics.values.parkingbrake = 1
@@ -213,31 +305,15 @@ local function freezeVehicle(veh)
 end
 
 local function wakeVehicle(veh)
-  if not veh then return end
-
-  pcall(function()
-    if veh.queueLuaCommand then
-      veh:queueLuaCommand([[
-        pcall(function()
-          if electrics and electrics.values then
-            electrics.values.parkingbrake = 1
-            electrics.values.brake = 1
-            electrics.values.throttle = 0
-          end
-        end)
-
-        pcall(function()
-          if ai then ai.setMode("disabled") end
-        end)
-      ]])
-    end
-  end)
+  stabilizeVehicle(veh)
 end
 
 local function setVehiclePosition(veh, pos, rot)
   if not veh or not pos then return false end
 
   local ok = false
+
+  stabilizeVehicle(veh)
 
   pcall(function()
     if veh.setPositionRotation and rot then
@@ -246,7 +322,10 @@ local function setVehiclePosition(veh, pos, rot)
     end
   end)
 
-  if ok then return true end
+  if ok then
+    stabilizeVehicle(veh)
+    return true
+  end
 
   pcall(function()
     if veh.setPosition then
@@ -255,7 +334,10 @@ local function setVehiclePosition(veh, pos, rot)
     end
   end)
 
-  if ok then return true end
+  if ok then
+    stabilizeVehicle(veh)
+    return true
+  end
 
   pcall(function()
     if veh.queueLuaCommand then
@@ -264,21 +346,23 @@ local function setVehiclePosition(veh, pos, rot)
           if obj and obj.setPosition then
             obj:setPosition(%0.6f, %0.6f, %0.6f)
           end
+
+          if obj then
+            if obj.setVelocity then obj:setVelocity(0, 0, 0) end
+            if obj.setAngularVelocity then obj:setAngularVelocity(0, 0, 0) end
+          end
         end)
       ]], pos.x, pos.y, pos.z))
       ok = true
     end
   end)
 
+  stabilizeVehicle(veh)
   return ok
 end
 
 local function hiddenPoolPosition(index)
-  return V(
-    10000 + ((index or 1) * hiddenSpacing),
-    10000,
-    hiddenZ
-  )
+  return V(10000 + ((index or 1) * hiddenSpacing), 10000, hiddenZ)
 end
 
 local function spawnLandMine(index)
@@ -304,7 +388,6 @@ local function spawnLandMine(index)
   end
 
   freezeVehicle(veh)
-
   return veh
 end
 
@@ -382,10 +465,14 @@ local function getLandMineDropPosition(playerVeh)
   local forward = vehicleForward(playerVeh)
   local behind = mul(forward, -placeBehindDistance)
 
-  local drop = add(playerPos, behind)
-  drop.z = drop.z + placeZOffset
+  local rawDrop = add(playerPos, behind)
+  local groundDrop, reason = snapToGround(rawDrop)
 
-  return drop, "ok"
+  if not groundDrop then
+    return nil, reason
+  end
+
+  return groundDrop, "ok"
 end
 
 local function placeLandMine()
@@ -434,6 +521,8 @@ local function placeLandMine()
     return false
   end
 
+  freezeVehicle(entry.veh)
+
   local moved = setVehiclePosition(entry.veh, dropPos)
 
   entry.active = true
@@ -449,7 +538,7 @@ local function placeLandMine()
       "I",
       "landMine",
       "deployed id=" .. tostring(entry.id)
-        .. " pos=(" .. tostring(dropPos.x) .. "," .. tostring(dropPos.y) .. "," .. tostring(dropPos.z) .. ")"
+        .. " groundPos=(" .. tostring(dropPos.x) .. "," .. tostring(dropPos.y) .. "," .. tostring(dropPos.z) .. ")"
     )
     return true
   end
@@ -503,14 +592,9 @@ M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = onExtensionUnloaded
 M.onUpdate = onUpdate
 
--- Keep this alias so your existing button binding can still call the old method name
--- until you rename the binding.
 M.fireWeapon = placeLandMine
-
--- Preferred new trigger name.
 M.placeLandMine = placeLandMine
 M.spawnLandMineBehindPlayer = placeLandMine
-
 M.preloadPool = preloadPool
 
 M.setEnabled = function(v)

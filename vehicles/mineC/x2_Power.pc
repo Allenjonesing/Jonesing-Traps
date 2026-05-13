@@ -1,0 +1,29 @@
+{
+  "colors":[
+    [
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1
+    ]
+  ],
+  "format":2,
+  "licenseName":"SVQ-8041",
+  "model":"mineC",
+  "parts":{},
+  "vars":{
+    "$UP_power":2
+  }
+}
