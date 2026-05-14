@@ -311,11 +311,15 @@ end
 local function safeDeleteVehicle(veh)
   if not veh then return end
 
-  pcall(function()
+  local ok, err = pcall(function()
     if veh.delete then
       veh:delete()
     end
   end)
+
+  if not ok then
+    logSafe("W", "landMine", "failed to delete pooled mine: " .. tostring(err))
+  end
 end
 
 local function setVehiclePosition(veh, pos, rot)
@@ -555,7 +559,7 @@ local function placeLandMine()
   end
 
   if entry.active and not refreshEntryMine(entry) then
-    hudText = "LAND MINE REFRESH FAILED"
+    hudText = "LAND MINE REFRESH FAILED: SPAWN"
     msg(hudText, 1.5, "refreshFailed", 0.5)
     return false
   end
