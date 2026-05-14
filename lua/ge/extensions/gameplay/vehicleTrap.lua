@@ -308,6 +308,16 @@ local function wakeVehicle(veh)
   stabilizeVehicle(veh)
 end
 
+local function safeDeleteVehicle(veh)
+  if not veh then return end
+
+  pcall(function()
+    if veh.delete then
+      veh:delete()
+    end
+  end)
+end
+
 local function setVehiclePosition(veh, pos, rot)
   if not veh or not pos then return false end
 
@@ -391,6 +401,28 @@ local function spawnLandMine(index)
   return veh
 end
 
+local function refreshEntryMine(entry)
+  if not entry then return false end
+
+  safeDeleteVehicle(entry.veh)
+
+  local index = tonumber(entry.slotIndex) or 1
+  local newVeh = spawnLandMine(index)
+
+  if not newVeh then
+    entry.veh = nil
+    return false
+  end
+
+  entry.veh = newVeh
+  entry.id = objId(newVeh)
+  entry.active = false
+  entry.lastPlaced = -1e9
+  entry.pos = hiddenPoolPosition(index)
+
+  return true
+end
+
 local function preloadPool()
   if poolReady or poolLoading then return end
 
@@ -405,6 +437,7 @@ local function preloadPool()
       table.insert(pool, {
         veh = veh,
         id = objId(veh),
+        slotIndex = i,
         active = false,
         lastPlaced = -1e9,
         pos = hiddenPoolPosition(i)
@@ -521,6 +554,12 @@ local function placeLandMine()
     return false
   end
 
+  if entry.active and not refreshEntryMine(entry) then
+    hudText = "LAND MINE REFRESH FAILED"
+    msg(hudText, 1.5, "refreshFailed", 0.5)
+    return false
+  end
+
   freezeVehicle(entry.veh)
 
   local moved = setVehiclePosition(entry.veh, dropPos)
@@ -549,6 +588,12 @@ local function placeLandMine()
 end
 
 local function onExtensionLoaded()
+  for _, entry in ipairs(pool or {}) do
+    if entry and entry.veh then
+      safeDeleteVehicle(entry.veh)
+    end
+  end
+
   enabled = true
   triggerTimer = 0
   pool = {}
@@ -563,6 +608,16 @@ local function onExtensionLoaded()
 end
 
 local function onExtensionUnloaded()
+  for _, entry in ipairs(pool or {}) do
+    if entry and entry.veh then
+      safeDeleteVehicle(entry.veh)
+    end
+  end
+
+  pool = {}
+  poolReady = false
+  poolLoading = false
+  spawnedCount = 0
   enabled = false
 end
 
