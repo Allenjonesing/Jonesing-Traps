@@ -20,8 +20,8 @@ local placeBehindDistance = 5.0
 local groundRayStartHeight = 50
 local groundRayLength = 250
 
-local landMineModel = "mineC"
-local landMineConfig = "vehicles/mineC/Normal.pc"
+local landMineModel = "mineJ"
+local landMineConfig = "vehicles/mineJ/Normal.pc"
 
 local hudText = "Jonesing Land Mine LOADING"
 local lastMsg = {}
