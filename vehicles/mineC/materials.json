@@ -1,0 +1,23 @@
+{
+  "mine": {
+    "mapTo": "mine",
+    "diffuseMap[1]": "vehicles/mineC/Cylinder_d",
+    "specularMap[1]": "vehicles/mineC/Cylinder_s",
+    "specularPower[0]": 128,
+    "pixelSpecular[0]": true,
+    "specularPower[1]": 32,
+    "pixelSpecular[1]": true,
+    "diffuseColor[0]": [1, 1, 1, 1],
+    "diffuseColor[1]": [1, 1, 1, 1],
+    "useAnisotropic[0]": true,
+    "useAnisotropic[1]": true,
+    "castShadows": true,
+    "translucent": true,
+    "translucentBlendOp": "None",
+    "alphaTest": false,
+    "alphaRef": 0,
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle"
+  }
+}
