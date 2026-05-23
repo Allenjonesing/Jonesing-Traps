@@ -27,6 +27,128 @@ local hudText = "Jonesing Land Mine LOADING"
 local lastMsg = {}
 local lastLog = {}
 
+local oilSlicks = {}
+local oilHitVehicles = {}
+
+local function groundPoint(pos)
+  local origin = pos + vec3(0, 0, 2)
+  local down = vec3(0, 0, -1)
+  local maxDist = 20
+
+  local hitDist = castRayStatic(origin, down, maxDist)
+
+  if hitDist and hitDist < maxDist then
+    return origin + (down * hitDist) + vec3(0, 0, 0.03)
+  end
+
+  return pos
+end
+
+local function applyOilToVehicle(obj)
+  if not obj then return end
+
+  local id = obj:getId()
+  local t = Engine.Platform.getRuntime()
+
+  if oilHitVehicles[id] and oilHitVehicles[id] > t then return end
+  oilHitVehicles[id] = t + 0.20
+
+  local swerve = math.random(0, 1) == 0 and -1 or 1
+
+  obj:queueLuaCommand(string.format([[
+    jonesingOilEndTime = math.max(jonesingOilEndTime or 0, os.clock() + 2.5)
+    jonesingOilDir = %d
+
+    if not jonesingOilHookInstalled then
+      jonesingOilHookInstalled = true
+      local oldUpdateGFX = updateGFX
+
+      function updateGFX(dt)
+        if oldUpdateGFX then oldUpdateGFX(dt) end
+        if not jonesingOilEndTime or os.clock() >= jonesingOilEndTime then
+          return
+        end
+
+        pcall(function()
+          if ai then
+            ai.setMode("manual")
+          end
+
+          if input and input.event then
+            local wobble = math.sin(os.clock() * 20) * 0.45
+            input.event("steering", jonesingOilDir + wobble, 1)
+            input.event("throttle", 0.65, 1)
+            input.event("brake", 0, 1)
+            input.event("parkingbrake", 0, 1)
+          end
+        end)
+      end
+    end
+
+    log("I", "JonesingOil", "Oil manual swerve applied")
+  ]], swerve))
+end
+
+local function deployOilSlick()
+  local veh = be:getPlayerVehicle(0)
+  if not veh then return end
+
+  local pos = veh:getPosition()
+  local dir = veh:getDirectionVector()
+  local right = dir:cross(vec3(0, 0, 1))
+
+  -- Trail of small pools behind the vehicle.
+  for i = 1, 12 do
+    local backDist = 3 + (i * 1.8)
+    local sideOffset = math.random(-180, 180) / 100
+    local poolPos = pos - (dir * backDist) + (right * sideOffset)
+
+    table.insert(oilSlicks, {
+      pos = groundPoint(poolPos),
+      radius = math.random(130, 260) / 100,
+      life = 14
+    })
+  end
+
+  log("I", "JonesingOil", "Oil slick trail deployed")
+end
+
+local function updateOilSlicks(dt)
+for i = #oilSlicks, 1, -1 do
+    local slick = oilSlicks[i]
+    slick.life = slick.life - dt
+
+    if slick.life <= 0 then
+      table.remove(oilSlicks, i)
+    else
+      local alpha = math.min(0.75, slick.life / 14)
+      local c = ColorF(0, 0, 0, alpha)
+
+      -- Visual black oil pool.
+      debugDrawer:drawCylinder(
+        slick.pos,
+        slick.pos + vec3(0, 0, 0.01),
+        slick.radius,
+        c
+      )
+
+      -- Trigger vehicles touching oil.
+      for v = 0, be:getObjectCount() - 1 do
+        local obj = be:getObject(v)
+
+        if obj then
+          local dist = obj:getPosition():distance(slick.pos)
+
+          if dist < slick.radius + 1.8 then
+            applyOilToVehicle(obj)
+          end
+        end
+      end
+    end
+  end
+end
+
+ 
 local function V(x, y, z)
   return { x = tonumber(x) or 0, y = tonumber(y) or 0, z = tonumber(z) or 0 }
 end
@@ -645,6 +767,8 @@ local function onUpdate(dtReal, dtSim, dtRaw)
         .. " enabled=" .. tostring(enabled)
     )
   end
+
+  updateOilSlicks(dtReal)
 end
 
 M.onExtensionLoaded = onExtensionLoaded
@@ -655,6 +779,7 @@ M.fireWeapon = placeLandMine
 M.placeLandMine = placeLandMine
 M.spawnLandMineBehindPlayer = placeLandMine
 M.preloadPool = preloadPool
+M.deployOilSlick = deployOilSlick
 
 M.setEnabled = function(v)
   enabled = v == true
@@ -681,6 +806,7 @@ M.setLandMineVehicle = function(model, config)
   landMineConfig = tostring(config or landMineConfig)
   return landMineModel, landMineConfig
 end
+
 
 M.getState = function()
   return {

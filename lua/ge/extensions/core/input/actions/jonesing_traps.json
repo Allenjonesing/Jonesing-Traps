@@ -7,5 +7,14 @@
     "isBasic": true,
     "ctx": "tlua",
     "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.placeLandMine() end"
+  },
+  "jonesingTrapsOil": {
+    "order": 11,
+    "title": "Jonesing Traps: Deploy Oil Slick",
+    "desc": "Deploys an oil slick trail from the active player vehicle.",
+    "cat": "vehicle",
+    "isBasic": true,
+    "ctx": "tlua",
+    "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.deployOilSlick() end"
   }
 }
