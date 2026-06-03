@@ -20,7 +20,10 @@
     ]
   ],
   "format":2,
-  "licenseName":"UFM-3601",
-  "model":"mineC",
-  "parts":{}
+  "licenseName":"SVQ-8041",
+  "model":"mineJ",
+  "parts":{},
+  "vars":{
+    "$UP_power":2
+  }
 }
