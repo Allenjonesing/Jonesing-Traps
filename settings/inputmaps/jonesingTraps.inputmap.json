@@ -3,7 +3,29 @@
   "description": "Jonesing Traps weapon action map",
   "bindings": [
     {
-      "action": "jonesingTraps.dropTrap",
+      "action": "jonesingTrapsFire",
+      "device": "keyboard",
+      "control": "numpad1",
+      "axisScale": 1.0,
+      "axisFilter": 0.0,
+      "deadzone": 0.0,
+      "linearity": 1.0,
+      "isTrigger": true,
+      "comment": "Drop land mine"
+    },
+    {
+      "action": "jonesingTrapsRockPile",
+      "device": "keyboard",
+      "control": "numpad2",
+      "axisScale": 1.0,
+      "axisFilter": 0.0,
+      "deadzone": 0.0,
+      "linearity": 1.0,
+      "isTrigger": true,
+      "comment": "Drop rock pile"
+    },
+    {
+      "action": "jonesingTrapsSpikeStrip",
       "device": "keyboard",
       "control": "numpad3",
       "axisScale": 1.0,
@@ -11,7 +33,18 @@
       "deadzone": 0.0,
       "linearity": 1.0,
       "isTrigger": true,
-      "comment": "Drop a trap"
+      "comment": "Drop spike strip"
+    },
+    {
+      "action": "jonesingTrapsSteelCoil",
+      "device": "keyboard",
+      "control": "numpad4",
+      "axisScale": 1.0,
+      "axisFilter": 0.0,
+      "deadzone": 0.0,
+      "linearity": 1.0,
+      "isTrigger": true,
+      "comment": "Drop steel coil"
     }
   ]
 }

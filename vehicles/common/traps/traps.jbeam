@@ -6,9 +6,37 @@
       "value": 0
     },
     "slotType": "licenseplate_design_2_1",
+    "variables": [
+      ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+      ["$jtCooldown", "range", "s", "Jonesing Traps", 0.25, 0.05, 2.0, "Trigger Cooldown", "Delay between trap deployments", {"stepDis": 0.05}],
+      ["$jtMinePoolSize", "range", "", "Jonesing Traps", 5, 1, 12, "Land Mine Pool Size", "How many land mines are pooled", {"stepDis": 1}],
+      ["$jtMineBehindDistance", "range", "m", "Jonesing Traps", 5.0, 2.0, 15.0, "Land Mine Drop Distance", "How far behind the player the mine is placed", {"stepDis": 0.25}],
+      ["$jtRockPilePoolSize", "range", "", "Jonesing Traps", 5, 1, 12, "Rock Pile Pool Size", "How many rock piles are pooled", {"stepDis": 1}],
+      ["$jtRockPileHeightOffset", "range", "m", "Jonesing Traps", 0.0, 0.0, 5.0, "Rock Pile Height Offset", "Vertical lift added when dropping a rock pile", {"stepDis": 0.05}],
+      ["$jtRockPileRotationOffsetDeg", "range", "deg", "Jonesing Traps", 0.0, -180.0, 180.0, "Rock Pile Rotation Offset", "Yaw offset relative to vehicle facing when dropping a rock pile", {"stepDis": 1}],
+      ["$jtSpikeStripPoolSize", "range", "", "Jonesing Traps", 5, 1, 12, "Spike Strip Pool Size", "How many spike strips are pooled", {"stepDis": 1}],
+      ["$jtSpikeStripHeightOffset", "range", "m", "Jonesing Traps", 0.0, 0.0, 5.0, "Spike Strip Height Offset", "Vertical lift added when dropping a spike strip", {"stepDis": 0.05}],
+      ["$jtSpikeStripRotationOffsetDeg", "range", "deg", "Jonesing Traps", 0.0, -180.0, 180.0, "Spike Strip Rotation Offset", "Yaw offset relative to vehicle facing when dropping a spike strip", {"stepDis": 1}],
+      ["$jtSteelCoilPoolSize", "range", "", "Jonesing Traps", 5, 1, 12, "Steel Coil Pool Size", "How many steel coils are pooled", {"stepDis": 1}],
+      ["$jtSteelCoilHeightOffset", "range", "m", "Jonesing Traps", 1.5, 0.0, 8.0, "Steel Coil Height Offset", "Vertical lift added when dropping a steel coil", {"stepDis": 0.05}],
+      ["$jtSteelCoilRotationOffsetDeg", "range", "deg", "Jonesing Traps", 0.0, -180.0, 180.0, "Steel Coil Rotation Offset", "Yaw offset relative to vehicle facing when dropping a steel coil", {"stepDis": 1}]
+    ],
     "controller": [
       ["fileName"],
-      ["jonesingTrapsTrigger", {}]
+      ["jonesingTrapsTrigger", {
+        "cooldown": "$jtCooldown",
+        "poolSize": "$jtMinePoolSize",
+        "placeBehindDistance": "$jtMineBehindDistance",
+        "rockPilePoolSize": "$jtRockPilePoolSize",
+        "rockPileHeightOffset": "$jtRockPileHeightOffset",
+        "rockPileRotationOffsetDeg": "$jtRockPileRotationOffsetDeg",
+        "spikeStripPoolSize": "$jtSpikeStripPoolSize",
+        "spikeStripHeightOffset": "$jtSpikeStripHeightOffset",
+        "spikeStripRotationOffsetDeg": "$jtSpikeStripRotationOffsetDeg",
+        "steelCoilPoolSize": "$jtSteelCoilPoolSize",
+        "steelCoilHeightOffset": "$jtSteelCoilHeightOffset",
+        "steelCoilRotationOffsetDeg": "$jtSteelCoilRotationOffsetDeg"
+      }]
     ],
     "slots": [
       ["type", "default", "description"]

@@ -8,13 +8,31 @@
     "ctx": "tlua",
     "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.placeLandMine() end"
   },
-  "jonesingTrapsOil": {
+  "jonesingTrapsRockPile": {
     "order": 11,
-    "title": "Jonesing Traps: Deploy Oil Slick",
-    "desc": "Deploys an oil slick trail from the active player vehicle.",
+    "title": "Jonesing Traps: Drop Rock Pile",
+    "desc": "Drops a rock pile from the active player vehicle.",
     "cat": "vehicle",
     "isBasic": true,
     "ctx": "tlua",
-    "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.deployOilSlick() end"
+    "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.deployRockPile() end"
+  },
+  "jonesingTrapsSpikeStrip": {
+    "order": 12,
+    "title": "Jonesing Traps: Drop Spike Strip",
+    "desc": "Drops a spike strip from the active player vehicle.",
+    "cat": "vehicle",
+    "isBasic": true,
+    "ctx": "tlua",
+    "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.deploySpikeStrip() end"
+  },
+  "jonesingTrapsSteelCoil": {
+    "order": 13,
+    "title": "Jonesing Traps: Drop Steel Coil",
+    "desc": "Drops a steel coil from the active player vehicle.",
+    "cat": "vehicle",
+    "isBasic": true,
+    "ctx": "tlua",
+    "onDown": "extensions.load('gameplay_vehicleTrap'); if extensions.gameplay_vehicleTrap then extensions.gameplay_vehicleTrap.deploySteelCoil() end"
   }
 }
